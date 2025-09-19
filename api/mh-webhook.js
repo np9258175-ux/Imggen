@@ -1,28 +1,18 @@
-let latestImage = null; // stores the most recent image URL
+let latestImage = null;
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
-    try {
-      const event = req.body;
+    const event = req.body;
 
-      console.log("Webhook received:", event);
-
-      if (event.type === "image.completed") {
-        const imageUrl = event.payload.downloads[0].url;
-        console.log("Generated image URL:", imageUrl);
-
-        latestImage = imageUrl; // store it for frontend
-      }
-
-      res.status(200).json({ success: true });
-    } catch (err) {
-      console.error("Webhook error:", err);
-      res.status(500).json({ error: "Internal server error" });
+    if (event.type === "image.completed") {
+      latestImage = event.payload.downloads[0].url;
+      console.log("Stored image URL:", latestImage);
     }
+
+    res.status(200).json({ success: true });
   } else {
     res.status(405).json({ error: "Method not allowed" });
   }
 }
 
-// export the latestImage for another endpoint
 export { latestImage };
