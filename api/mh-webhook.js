@@ -1,12 +1,15 @@
-let latestImage = null;
+// Store latest image per prompt
+const latestImages = {};
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
     const event = req.body;
 
     if (event.type === "image.completed") {
-      latestImage = event.payload.downloads[0].url;
-      console.log("Stored image URL:", latestImage);
+      const prompt = event.payload.name || "unknown";
+      const url = event.payload.downloads[0].url;
+      latestImages[prompt] = url;
+      console.log(`Stored image for prompt "${prompt}":`, url);
     }
 
     res.status(200).json({ success: true });
@@ -15,4 +18,4 @@ export default async function handler(req, res) {
   }
 }
 
-export { latestImage };
+export { latestImages };
