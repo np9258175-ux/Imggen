@@ -51,47 +51,8 @@
           return;
         }
 
-        resultDiv.innerText = "⏳ Generating image... please wait.";
-
-      } catch (err) {
-        resultDiv.innerText = "⚠️ Error occurred!";
-        logDiv.innerText += "Error: " + err.message + "\n";
-      }
-    }
-
-    // Poll latest image every 2 seconds
-    async function fetchLatestImage() {
-      try {
-        const resp = await fetch("/api/latest-image");
-        const data = await resp.json();
-        if (data.url) {
-          resultDiv.innerHTML = `<img src="${data.url}" width="400" alt="Generated Image">`;
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    setInterval(fetchLatestImage, 2000);
-    fetchLatestImage();
-  </script>
-</body>
-</html>            style: { prompt: prompt },
-            name: "minimal-test",
-            wait_for_completion: false
-          })
-        });
-
-        const data = await resp.json();
-        logDiv.innerText += "Initial response:\n" + JSON.stringify(data, null, 2) + "\n";
-
-        if (!data.id) {
-          resultDiv.innerHTML = "❌ No generation ID";
-          return;
-        }
-
         const genId = data.id;
-        resultDiv.innerHTML = "⏳ Generating image... please wait.";
+        resultDiv.innerText = "⏳ Generating image... please wait.";
 
         const interval = setInterval(async () => {
           const statusResp = await fetch(`https://api.magichour.ai/v1/ai-image-generator/${genId}`, {
@@ -107,17 +68,33 @@
             logDiv.innerText += "✅ Image ready\n";
           } else if (statusData.status === "failed") {
             clearInterval(interval);
-            resultDiv.innerHTML = "❌ Image generation failed";
+            resultDiv.innerText = "❌ Image generation failed";
           } else {
-            resultDiv.innerHTML = "⏳ Generating image... please wait.";
+            resultDiv.innerText = "⏳ Generating image... please wait.";
           }
         }, 2000);
 
       } catch (err) {
-        resultDiv.innerHTML = "⚠️ Error occurred!";
+        resultDiv.innerText = "⚠️ Error occurred!";
         logDiv.innerText += "Error: " + err.message + "\n";
       }
     }
+
+    // Poll webhook latest image (optional if using webhook)
+    async function fetchLatestImage() {
+      try {
+        const resp = await fetch("/api/latest-image");
+        const data = await resp.json();
+        if (data.url) {
+          resultDiv.innerHTML = `<img src="${data.url}" width="400" alt="Generated Image">`;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    setInterval(fetchLatestImage, 2000);
+    fetchLatestImage();
   </script>
 </body>
 </html>
