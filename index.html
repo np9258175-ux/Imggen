@@ -1,36 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Magic Hour Webhook Test</title>
+  <title>Magic Hour Test</title>
 </head>
 <body>
-  <h1>Generated Image from Webhook</h1>
-  <div id="image-container">No image yet</div>
+  <textarea id="prompt" rows="4" cols="50" placeholder="Enter prompt"></textarea><br>
+  <button onclick="generateImage()">Generate</button><br><br>
+
+  <div id="result">Generated Image from Webhook<br>No image yet</div>
+  <pre id="log"></pre>
 
   <script>
-    const container = document.getElementById("image-container");
+    const API_KEY = "mhk_live_BgcvT6syOzTtmUIr2mUy8fjQ8nNGwCcTqqWNhfqEGHHKQ37uZLaLFM5V6dQ5aBtEU42OdSE3Pfv9Bj5L";
 
-    async function fetchLatestImage() {
+    async function generateImage() {
+      const prompt = document.getElementById("prompt").value.trim();
+      const resultDiv = document.getElementById("result");
+      const logDiv = document.getElementById("log");
+      logDiv.innerText = "";
+
+      if (!prompt) { alert("Enter prompt"); return; }
+
+      resultDiv.innerHTML = "⏳ Sending request...";
+      logDiv.innerText += "Sending request...\n";
+
       try {
-        const resp = await fetch("/api/latest-image");
-        const data = await resp.json();
-        if (data.url) {
-          container.innerHTML = `<img src="${data.url}" width="400" alt="Generated Image">`;
-        } else {
-          container.innerText = "No image yet";
-        }
-      } catch (err) {
-        container.innerText = "Error fetching image";
-        console.error(err);
-      }
-    }
-
-    // Poll every 2 seconds
-    setInterval(fetchLatestImage, 2000);
-    fetchLatestImage(); // fetch immediately on page load
-  </script>
-</body>
-</html>            style: { prompt: prompt },
+        const resp = await fetch("https://api.magichour.ai/v1/ai-image-generator", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${API_KEY}`
+          },
+          body: JSON.stringify({
+            image_count: 1,
+            orientation: "square",
+            style: { prompt: prompt },
             name: "minimal-test",
             wait_for_completion: false
           })
@@ -39,9 +43,9 @@
         const data = await resp.json();
         logDiv.innerText += "Initial response:\n" + JSON.stringify(data, null, 2) + "\n";
 
-        if (!data.id) { 
-          resultDiv.innerHTML = "❌ No generation ID"; 
-          return; 
+        if (!data.id) {
+          resultDiv.innerHTML = "❌ No generation ID";
+          return;
         }
 
         const genId = data.id;
@@ -57,7 +61,7 @@
           if (statusData.outputs && statusData.outputs[0]?.url) {
             clearInterval(interval);
             const url = statusData.outputs[0].url;
-            resultDiv.innerHTML = `<img src="${url}" alt="Generated Image" width="400">`;
+            resultDiv.innerHTML = `<img src="${url}" width="400" alt="Generated Image">`;
             logDiv.innerText += "✅ Image ready\n";
           } else if (statusData.status === "failed") {
             clearInterval(interval);
