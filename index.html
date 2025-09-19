@@ -13,28 +13,10 @@
   <div id="result"></div>
   <pre id="log"></pre>
 
+  <!-- load JS correctly -->
   <script src="js/app.js"></script>
 </body>
-</html>        resultDiv.innerHTML = "⏳ Generation started, waiting for image...";
-
-        const interval = setInterval(async () => {
-          const statusResp = await fetch(`https://api.magichour.ai/v1/ai-image-generator/${genId}`, {
-            headers: { "Authorization": `Bearer ${API_KEY}` }
-          });
-          const statusData = await statusResp.json();
-          logDiv.innerText += "Polling response:\n" + JSON.stringify(statusData, null, 2) + "\n";
-
-          if (statusData.outputs && statusData.outputs.length > 0 && statusData.outputs[0].url) {
-            clearInterval(interval);
-            const imageUrl = statusData.outputs[0].url;
-            resultDiv.innerHTML = `<img src="${imageUrl}" alt="Generated Image">`;
-            logDiv.innerText += "✅ Image ready and displayed.\n";
-          } else if (statusData.status === "failed") {
-            clearInterval(interval);
-            resultDiv.innerHTML = "❌ Image generation failed.";
-            logDiv.innerText += "⚠️ Generation failed.\n";
-          } else {
-            resultDiv.innerHTML = "⏳ Generating image... please wait.";
+</html>            resultDiv.innerHTML = "⏳ Generating image... please wait.";
           }
         }, 2000);
 
