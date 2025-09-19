@@ -1,40 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Magic Hour Test</title>
+  <title>Magic Hour Webhook Test</title>
 </head>
 <body>
-  <textarea id="prompt" rows="4" cols="50" placeholder="Enter prompt"></textarea><br>
-  <button onclick="generateImage()">Generate</button><br><br>
-
-  <div id="result"></div>
-  <pre id="log"></pre>
+  <h1>Generated Image from Webhook</h1>
+  <div id="image-container">No image yet</div>
 
   <script>
-    const API_KEY = "mhk_live_BgcvT6syOzTtmUIr2mUy8fjQ8nNGwCcTqqWNhfqEGHHKQ37uZLaLFM5V6dQ5aBtEU42OdSE3Pfv9Bj5L";
+    const container = document.getElementById("image-container");
 
-    async function generateImage() {
-      const prompt = document.getElementById("prompt").value.trim();
-      const resultDiv = document.getElementById("result");
-      const logDiv = document.getElementById("log");
-      logDiv.innerText = "";
-
-      if (!prompt) { alert("Enter prompt"); return; }
-
-      resultDiv.innerHTML = "⏳ Sending request...";
-      logDiv.innerText += "Sending request...\n";
-
+    async function fetchLatestImage() {
       try {
-        const resp = await fetch("https://api.magichour.ai/v1/ai-image-generator", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${API_KEY}`
-          },
-          body: JSON.stringify({
-            image_count: 1,
-            orientation: "square",
-            style: { prompt: prompt },
+        const resp = await fetch("/api/latest-image");
+        const data = await resp.json();
+        if (data.url) {
+          container.innerHTML = `<img src="${data.url}" width="400" alt="Generated Image">`;
+        } else {
+          container.innerText = "No image yet";
+        }
+      } catch (err) {
+        container.innerText = "Error fetching image";
+        console.error(err);
+      }
+    }
+
+    // Poll every 2 seconds
+    setInterval(fetchLatestImage, 2000);
+    fetchLatestImage(); // fetch immediately on page load
+  </script>
+</body>
+</html>            style: { prompt: prompt },
             name: "minimal-test",
             wait_for_completion: false
           })
