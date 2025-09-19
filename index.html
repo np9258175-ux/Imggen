@@ -22,12 +22,13 @@
 
     async function generateImage() {
       const prompt = document.getElementById("prompt").value.trim();
-      if (!prompt) { alert("Enter prompt"); return; }
+      if (!prompt) return alert("Enter prompt");
 
-      logDiv.innerText = "";
       resultDiv.innerText = "⏳ Sending request...";
+      logDiv.innerText = "";
 
       try {
+        // Send prompt to Magic Hour API
         const resp = await fetch("https://api.magichour.ai/v1/ai-image-generator", {
           method: "POST",
           headers: {
@@ -35,6 +36,44 @@
             "Authorization": `Bearer ${API_KEY}`
           },
           body: JSON.stringify({
+            image_count: 1,
+            orientation: "square",
+            style: { prompt: prompt },
+            name: prompt,
+            wait_for_completion: false
+          })
+        });
+
+        const data = await resp.json();
+        logDiv.innerText += "Initial response:\n" + JSON.stringify(data, null, 2) + "\n";
+
+        if (!data.id) {
+          resultDiv.innerText = "❌ No generation ID";
+          return;
+        }
+
+        resultDiv.innerText = "⏳ Generating image... please wait.";
+
+        // Poll the serverless endpoint for this prompt
+        const interval = setInterval(async () => {
+          const latestResp = await fetch(`/api/latest-image?prompt=${encodeURIComponent(prompt)}`);
+          const latestData = await latestResp.json();
+
+          if (latestData.url) {
+            resultDiv.innerHTML = `<img src="${latestData.url}" width="400" alt="Generated Image">`;
+            logDiv.innerText += "✅ Image ready\n";
+            clearInterval(interval);
+          }
+        }, 2000);
+
+      } catch (err) {
+        resultDiv.innerText = "⚠️ Error occurred!";
+        logDiv.innerText += "Error: " + err.message + "\n";
+      }
+    }
+  </script>
+</body>
+</html>          body: JSON.stringify({
             image_count: 1,
             orientation: "square",
             style: { prompt: prompt },
