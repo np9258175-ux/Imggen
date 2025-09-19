@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Magic Hour1 Image Generator</title>
+  <title>Magic Hour Image Generator</title>
 </head>
 <body>
   <h1>Magic Hour Image Generator</h1>
@@ -20,11 +20,12 @@
     const resultDiv = document.getElementById("image-container");
     const logDiv = document.getElementById("log");
 
+    // Send prompt to Magic Hour
     async function generateImage() {
       const prompt = document.getElementById("prompt").value.trim();
       if (!prompt) return alert("Enter prompt");
 
-      resultDiv.innerText = "⏳ Generating image...";
+      resultDiv.innerText = "⏳ Sending request...";
       logDiv.innerText = "";
 
       try {
@@ -35,6 +36,41 @@
             "Authorization": `Bearer ${API_KEY}`
           },
           body: JSON.stringify({
+            image_count: 1,
+            orientation: "square",
+            style: { prompt: prompt },
+            name: prompt,
+            wait_for_completion: false // async
+          })
+        });
+
+        const data = await resp.json();
+        logDiv.innerText += "API Response:\n" + JSON.stringify(data, null, 2) + "\n";
+        resultDiv.innerText = "✅ Prompt sent. Image will appear when ready.";
+      } catch (err) {
+        resultDiv.innerText = "⚠️ Error occurred!";
+        logDiv.innerText += "Error: " + err.message + "\n";
+      }
+    }
+
+    // Poll latest image from serverless endpoint
+    async function fetchLatestImage() {
+      try {
+        const resp = await fetch("/api/latest-image");
+        const data = await resp.json();
+        if (data.url) {
+          resultDiv.innerHTML = `<img src="${data.url}" width="400" alt="Generated Image">`;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    setInterval(fetchLatestImage, 2000);
+    fetchLatestImage();
+  </script>
+</body>
+</html>          body: JSON.stringify({
             image_count: 1,
             orientation: "square",
             style: { prompt: prompt },
