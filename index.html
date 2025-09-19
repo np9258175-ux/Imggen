@@ -28,6 +28,7 @@
       logDiv.innerText = "";
 
       try {
+        // Send request to Magic Hour
         const resp = await fetch("https://api.magichour.ai/v1/ai-image-generator", {
           method: "POST",
           headers: {
@@ -39,40 +40,21 @@
             orientation: "square",
             style: { prompt: prompt },
             name: prompt,
-            wait_for_completion: false
+            wait_for_completion: true  // wait for completion to get URL directly
           })
         });
 
         const data = await resp.json();
-        logDiv.innerText += "Initial response:\n" + JSON.stringify(data, null, 2) + "\n";
+        logDiv.innerText += "API Response:\n" + JSON.stringify(data, null, 2) + "\n";
 
-        if (!data.id) {
-          resultDiv.innerText = "❌ No generation ID";
-          return;
+        // Check if URL exists
+        if (data.outputs && data.outputs[0]?.url) {
+          const url = data.outputs[0].url;
+          resultDiv.innerHTML = `<img src="${url}" width="400" alt="Generated Image">`;
+          logDiv.innerText += "✅ Image displayed successfully\n";
+        } else {
+          resultDiv.innerText = "❌ Image not available yet";
         }
-
-        const genId = data.id;
-        resultDiv.innerText = "⏳ Generating image... please wait.";
-
-        const interval = setInterval(async () => {
-          const statusResp = await fetch(`https://api.magichour.ai/v1/ai-image-generator/${genId}`, {
-            headers: { "Authorization": `Bearer ${API_KEY}` }
-          });
-          const statusData = await statusResp.json();
-          logDiv.innerText += JSON.stringify(statusData, null, 2) + "\n";
-
-          if (statusData.outputs && statusData.outputs[0]?.url) {
-            clearInterval(interval);
-            const url = statusData.outputs[0].url;
-            resultDiv.innerHTML = `<img src="${url}" width="400" alt="Generated Image">`;
-            logDiv.innerText += "✅ Image ready\n";
-          } else if (statusData.status === "failed") {
-            clearInterval(interval);
-            resultDiv.innerText = "❌ Image generation failed";
-          } else {
-            resultDiv.innerText = "⏳ Generating image... please wait.";
-          }
-        }, 2000);
 
       } catch (err) {
         resultDiv.innerText = "⚠️ Error occurred!";
@@ -81,4 +63,4 @@
     }
   </script>
 </body>
-  </html>
+</html>
