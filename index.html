@@ -52,17 +52,38 @@
           return;
         }
 
+        const genId = data.id;
         resultDiv.innerText = "⏳ Generating image... please wait.";
 
-        // Poll the serverless endpoint for this prompt
+        // Poll Magic Hour API for image status
         const interval = setInterval(async () => {
-          const latestResp = await fetch(`/api/latest-image?prompt=${encodeURIComponent(prompt)}`);
-          const latestData = await latestResp.json();
+          const statusResp = await fetch(`https://api.magichour.ai/v1/ai-image-generator/${genId}`, {
+            headers: { "Authorization": `Bearer ${API_KEY}` }
+          });
+          const statusData = await statusResp.json();
+          logDiv.innerText += JSON.stringify(statusData, null, 2) + "\n";
 
-          if (latestData.url) {
-            resultDiv.innerHTML = `<img src="${latestData.url}" width="400" alt="Generated Image">`;
-            logDiv.innerText += "✅ Image ready\n";
+          if (statusData.outputs && statusData.outputs[0]?.url) {
             clearInterval(interval);
+            const url = statusData.outputs[0].url;
+            resultDiv.innerHTML = `<img src="${url}" width="400" alt="Generated Image">`;
+            logDiv.innerText += "✅ Image ready\n";
+          } else if (statusData.status === "failed") {
+            clearInterval(interval);
+            resultDiv.innerText = "❌ Image generation failed";
+          } else {
+            resultDiv.innerText = "⏳ Generating image... please wait.";
+          }
+        }, 2000);
+
+      } catch (err) {
+        resultDiv.innerText = "⚠️ Error occurred!";
+        logDiv.innerText += "Error: " + err.message + "\n";
+      }
+    }
+  </script>
+</body>
+</html>            clearInterval(interval);
           }
         }, 2000);
 
